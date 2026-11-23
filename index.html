@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ابن اليمن — منصة التحكم السحابية وإدارة الموارد</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Cairo", "Tajawal", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"],
+          },
+          colors: {
+            obsidian: "#06080f",
+            midnight: "#0b101d",
+            slateCard: "#101729",
+            slateElevated: "#162038",
+            slateBorder: "#22304f",
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Cairo", "Tajawal", sans-serif;
+      background-color: #06080f;
+      color: #f1f5f9;
+      overflow-x: hidden;
+    }
+    .font-mono-code { font-family: "JetBrains Mono", monospace; }
+    .wisp-backdrop {
+      background-image:
+        radial-gradient(circle at 12% 10%, rgba(99, 102, 241, 0.14), transparent 36%),
+        radial-gradient(circle at 88% 8%, rgba(6, 182, 212, 0.12), transparent 36%),
+        radial-gradient(circle at 50% 95%, rgba(16, 185, 129, 0.06), transparent 45%),
+        linear-gradient(to right, rgba(148, 163, 184, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, 0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+    }
+    .btn-electric {
+      background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #06b6d4 100%);
+      transition: transform 0.18s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    }
+    .btn-electric:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 26px -6px rgba(99, 102, 241, 0.45);
+      filter: brightness(1.06);
+    }
+    ::-webkit-scrollbar { width: 7px; height: 7px; }
+    ::-webkit-scrollbar-track { background: #090d18; }
+    ::-webkit-scrollbar-thumb { background: #243354; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #364b7a; }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(1.2); }
+    }
+    .dot-pulse { animation: pulseDot 2s infinite ease-in-out; }
+  </style>
+</head>
+<body class="wisp-backdrop min-h-screen antialiased selection:bg-indigo-500/30 selection:text-cyan-200">
+  <div id="toastStack" class="fixed bottom-5 left-5 z-[70] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none"></div>
+  <div id="mobileBackdrop" onclick="setMobileDrawer(false)" class="fixed inset-0 bg-black/75 backdrop-blur-xs z-30 hidden lg:hidden"></div>
+
+  <div class="flex min-h-screen w-full">
+    <aside id="appSidebar" class="fixed lg:sticky top-0 right-0 z-40 h-screen w-72 bg-midnight/95 backdrop-blur-xl border-l border-slateBorder flex flex-col justify-between transition-transform duration-300 translate-x-full lg:translate-x-0">
+      <div class="overflow-y-auto">
+        <div class="px-5 py-4 border-b border-slateBorder flex items-center justify-between">
+          <a href="/" class="flex items-center gap-3 group">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-sky-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform">
+              <i data-lucide="cpu" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="font-extrabold text-lg tracking-tight text-white">ابن اليمن</span>
+                <span class="text-[10px] font-mono-code font-bold px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">v5.0</span>
+              </div>
+              <p class="text-[11px] text-slate-400">مركز العمليات والاستضافة الموزعة</p>
+            </div>
+          </a>
+          <button onclick="setMobileDrawer(false)" class="lg:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slateElevated" aria-label="إغلاق القائمة">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <nav class="p-3.5 space-y-1" aria-label="أقسام لوحة التحكم">
+          <button data-tab="overview" onclick="navigateTo('overview')" class="nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold bg-indigo-500/15 text-white border border-indigo-500/35 transition-all cursor-pointer">
+            <span class="flex items-center gap-3">
+              <i data-lucide="gauge" class="w-4 h-4 text-cyan-400"></i>
+              <span>نظرة عامة والتحكم</span>
+            </span>
+            <span class="w-2 h-2 rounded-full bg-emerald-400 dot-pulse"></span>
+          </button>
+
+          <button data-tab="workloads" onclick="navigateTo('workloads')" class="nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slateElevated/80 border border-transparent transition-all cursor-pointer">
+            <span class="flex items-center gap-3">
+              <i data-lucide="server" class="w-4 h-4 text-indigo-400"></i>
+              <span>أحمال العمل والعقد</span>
+            </span>
+            <span id="navWorkloadsBadge" class="font-mono-code text-xs px-2 py-0.5 rounded-md bg-slateElevated text-slate-200 border border-slateBorder">0</span>
+          </button>
+
+          <button data-tab="console" onclick="navigateTo('console')" class="nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slateElevated/80 border border-transparent transition-all cursor-pointer">
+            <span class="flex items-center gap-3">
+              <i data-lucide="terminal" class="w-4 h-4 text-emerald-400"></i>
+              <span>الطرفية والسجلات الحية</span>
+            </span>
+            <span class="font-mono-code text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">LIVE</span>
+          </button>
+
+          <button data-tab="files" onclick="navigateTo('files')" class="nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slateElevated/80 border border-transparent transition-all cursor-pointer">
+            <span class="flex items-center gap-3">
+              <i data-lucide="folder-code" class="w-4 h-4 text-amber-400"></i>
+              <span>مدير الملفات والمحرر</span>
+            </span>
+          </button>
+
+          <button data-tab="databases" onclick="navigateTo('databases')" class="nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slateElevated/80 border border-transparent transition-all cursor-pointer">
+            <span class="flex items-center gap-3">
+              <i data-lucide="database" class="w-4 h-4 text-cyan-400"></i>
+              <span>قواعد البيانات والتخزين</span>
+            </span>
+          </button>
+
+          <button data-tab="network" onclick="navigateTo('network')" class="nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slateElevated/80 border border-transparent transition-all cursor-pointer">
+            <span class="flex items-center gap-3">
+              <i data-lucide="globe" class="w-4 h-4 text-sky-400"></i>
+              <span>الشبكة، النطاقات والإضافات</span>
+            </span>
+          </button>
+
+          <button data-tab="billing" onclick="navigateTo('billing')" class="nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slateElevated/80 border border-transparent transition-all cursor-pointer">
+            <span class="flex items-center gap-3">
+              <i data-lucide="wallet" class="w-4 h-4 text-rose-400"></i>
+              <span>الفوترة، الحصص والإعدادات</span>
+            </span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="p-4 border-t border-slateBorder space-y-3 bg-midnight/90">
+        <div class="p-3 rounded-xl bg-slateCard border border-slateBorder">
+          <div class="flex items-center justify-between text-xs mb-1.5">
+            <span class="text-slate-400">العقدة النشطة</span>
+            <span class="font-mono-code text-cyan-300 font-semibold">yemen-cloud-01</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-400">الرصيد المتاح</span>
+            <span id="sidebarPointsBadge" class="font-mono-code font-bold text-emerald-300">0 pt</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center font-mono-code text-xs font-bold text-cyan-300 shrink-0">
+              YB
+            </div>
+            <div class="min-w-0">
+              <p id="sidebarUserName" class="text-xs font-bold text-white truncate">مستخدم ابن اليمن</p>
+              <p id="sidebarUserMeta" class="font-mono-code text-[11px] text-slate-400 truncate">@user</p>
+            </div>
+          </div>
+          <button onclick="logoutWebAccount()" title="تسجيل الخروج" class="px-2 py-1 rounded-lg text-[11px] font-bold bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 cursor-pointer shrink-0">
+            خروج
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-w-0">
+      <header class="sticky top-0 z-20 bg-obsidian/85 backdrop-blur-xl border-b border-slateBorder px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3 min-w-0">
+          <button onclick="setMobileDrawer(true)" class="lg:hidden p-2.5 rounded-xl bg-slateCard border border-slateBorder text-slate-200 hover:bg-slateElevated cursor-pointer" aria-label="فتح القائمة">
+            <i data-lucide="menu" class="w-5 h-5"></i>
+          </button>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <h1 id="activeViewTitle" class="text-lg sm:text-xl font-extrabold text-white truncate">نظرة عامة والتحكم — ابن اليمن</h1>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/25">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 dot-pulse"></span>
+                <span>ابن اليمن • متصل ومزامن</span>
+              </span>
+            </div>
+            <p id="activeViewSubtitle" class="text-xs text-slate-400 hidden sm:block mt-0.5">مراقبة الأداء اللحظي، رفع الملفات من الهاتف، وإدارة السكربتات الفورية</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <button onclick="refreshAllFromBackend(true)" class="p-2.5 rounded-xl bg-slateCard hover:bg-slateElevated border border-slateBorder text-slate-300 hover:text-cyan-300 transition-colors cursor-pointer" title="تحديث البيانات">
+            <i id="topRefreshIcon" data-lucide="refresh-cw" class="w-4 h-4"></i>
+          </button>
+          <button onclick="openPhoneUploadModal()" class="btn-electric inline-flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white cursor-pointer">
+            <i data-lucide="smartphone-nfc" class="w-4 h-4"></i>
+            <span>رفع ملف من الهاتف</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="flex-1 px-4 sm:px-6 lg:px-8 py-6 space-y-6 max-w-[1640px] w-full mx-auto">
+        <section id="view-overview" class="app-view space-y-6">
+          <div class="p-5 rounded-2xl bg-slateCard/95 border border-indigo-500/35 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 class="text-base sm:text-lg font-extrabold text-white flex items-center gap-2">
+                  <i data-lucide="upload-cloud" class="w-5 h-5 text-cyan-400"></i>
+                  <span>رفع السكربتات (.py / .js / .zip) مباشرة من ذاكرة الهاتف</span>
+                </h2>
+                <p class="text-xs text-slate-400">يتم فحص الكود أمنياً وتشفيره بـ AES وحفظه باسم إنجليزي وربطه بحسابك في ابن اليمن</p>
+              </div>
+              <span id="uploadPriceHint" class="font-mono-code text-xs px-3 py-1 rounded-xl bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">السعر: 1.0 نقطة / ساعة</span>
+            </div>
+
+            <form onsubmit="submitPhoneFileUpload(event)" class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+              <div class="md:col-span-6">
+                <label class="block text-xs font-bold text-slate-300 mb-1.5">اختر ملفاً من ذاكرة الهاتف (.py, .js, .zip)</label>
+                <input
+                  id="phoneFileInput"
+                  type="file"
+                  accept=".py,.js,.zip,application/zip,text/plain,text/javascript"
+                  required
+                  class="w-full px-3 py-2 rounded-xl bg-obsidian border border-slateBorder text-xs text-slate-200 file:ml-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer"
+                />
+              </div>
+              <div class="md:col-span-3">
+                <label class="block text-xs font-bold text-slate-300 mb-1.5">عدد الساعات</label>
+                <input id="phoneUploadHours" type="number" min="1" max="720" value="1" required class="w-full px-3.5 py-2 rounded-xl bg-obsidian border border-slateBorder font-mono-code text-xs sm:text-sm text-white" />
+              </div>
+              <div class="md:col-span-3">
+                <button type="submit" class="btn-electric w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold text-white inline-flex items-center justify-center gap-2 cursor-pointer">
+                  <i data-lucide="send" class="w-4 h-4"></i>
+                  <span>رفع وتشغيل</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 gap-4">
+            <div class="p-4 rounded-2xl bg-slateCard border border-slateBorder">
+              <div class="flex items-center justify-between mb-2.5">
+                <span class="text-xs font-semibold text-slate-400">حمل المعالج (CPU)</span>
+                <span class="p-1.5 rounded-lg bg-indigo-500/15 text-indigo-400"><i data-lucide="cpu" class="w-4 h-4"></i></span>
+              </div>
+              <div class="flex items-baseline justify-between">
+                <span id="kpiCpu" class="font-mono-code text-xl font-bold text-white">0%</span>
+                <span id="kpiCores" class="font-mono-code text-[11px] text-emerald-400">vCPU</span>
+              </div>
+              <div class="mt-2.5 w-full h-1.5 rounded-full bg-obsidian overflow-hidden">
+                <div id="kpiCpuBar" class="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slateCard border border-slateBorder">
+              <div class="flex items-center justify-between mb-2.5">
+                <span class="text-xs font-semibold text-slate-400">الذاكرة (RAM)</span>
+                <span class="p-1.5 rounded-lg bg-cyan-500/15 text-cyan-400"><i data-lucide="memory-stick" class="w-4 h-4"></i></span>
+              </div>
+              <div class="flex items-baseline justify-between">
+                <span id="kpiRam" class="font-mono-code text-xl font-bold text-white">0 GB</span>
+                <span id="kpiRamSub" class="font-mono-code text-[11px] text-cyan-300">/ 0 GB</span>
+              </div>
+              <div class="mt-2.5 w-full h-1.5 rounded-full bg-obsidian overflow-hidden">
+                <div id="kpiRamBar" class="h-full bg-gradient-to-r from-cyan-500 to-indigo-400 transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slateCard border border-slateBorder">
+              <div class="flex items-center justify-between mb-2.5">
+                <span class="text-xs font-semibold text-slate-400">التخزين والقرص</span>
+                <span class="p-1.5 rounded-lg bg-amber-500/15 text-amber-400"><i data-lucide="hard-drive" class="w-4 h-4"></i></span>
+              </div>
+              <div class="flex items-baseline justify-between">
+                <span id="kpiDiskIo" class="font-mono-code text-xl font-bold text-white">0%</span>
+                <span id="kpiDiskFree" class="font-mono-code text-[11px] text-amber-300">Free</span>
+              </div>
+              <div class="mt-2.5 w-full h-1.5 rounded-full bg-obsidian overflow-hidden">
+                <div id="kpiDiskBar" class="h-full bg-gradient-to-r from-amber-500 to-yellow-300 transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slateCard border border-slateBorder">
+              <div class="flex items-center justify-between mb-2.5">
+                <span class="text-xs font-semibold text-slate-400">تدفق الشبكة</span>
+                <span class="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400"><i data-lucide="activity" class="w-4 h-4"></i></span>
+              </div>
+              <div class="flex items-baseline justify-between">
+                <span id="kpiNet" class="font-mono-code text-xl font-bold text-white">640 Mbps</span>
+                <span class="font-mono-code text-[11px] text-emerald-400">HTTP/3</span>
+              </div>
+              <div class="mt-2.5 w-full h-1.5 rounded-full bg-obsidian overflow-hidden">
+                <div id="kpiNetBar" class="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-500" style="width: 60%"></div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slateCard border border-slateBorder">
+              <div class="flex items-center justify-between mb-2.5">
+                <span class="text-xs font-semibold text-slate-400">الملفات والسكربتات</span>
+                <span class="p-1.5 rounded-lg bg-indigo-500/15 text-indigo-400"><i data-lucide="box" class="w-4 h-4"></i></span>
+              </div>
+              <div class="flex items-baseline justify-between">
+                <span id="kpiActiveContainers" class="font-mono-code text-xl font-bold text-white">0 / 0</span>
+                <span class="font-mono-code text-[11px] text-emerald-400">ACTIVE</span>
+              </div>
+              <p class="mt-2.5 text-[11px] text-slate-400">مزامنة مباشرة مع الاستضافة</p>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-slateCard border border-slateBorder">
+              <div class="flex items-center justify-between mb-2.5">
+                <span class="text-xs font-semibold text-slate-400">وضع السيرفر</span>
+                <span class="p-1.5 rounded-lg bg-cyan-500/15 text-cyan-400"><i data-lucide="clock" class="w-4 h-4"></i></span>
+              </div>
+              <div class="flex items-baseline justify-between">
+                <span id="kpiServerMode" class="font-mono-code text-sm font-bold text-emerald-300">ONLINE</span>
+                <span class="font-mono-code text-[11px] text-slate-400">ابن اليمن</span>
+              </div>
+              <p class="mt-2.5 text-[11px] text-slate-400">حماية وتشفير مستمر</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            <div class="p-5 rounded-2xl bg-slateCard border border-slateBorder space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
+                    <span>منحنى استهلاك المعالج (CPU Telemetry)</span>
+                  </h2>
+                  <p class="text-xs text-slate-400">قراءات حية من سيرفر ابن اليمن</p>
+                </div>
+                <div class="flex items-center gap-1 bg-obsidian p-1 rounded-xl border border-slateBorder">
+                  <button data-range="15m" onclick="setTelemetryRange('15m')" class="range-btn px-2.5 py-1 rounded-lg font-mono-code text-xs font-bold bg-indigo-500/25 text-indigo-200 cursor-pointer">15m</button>
+                  <button data-range="1h" onclick="setTelemetryRange('1h')" class="range-btn px-2.5 py-1 rounded-lg font-mono-code text-xs font-semibold text-slate-400 hover:text-white cursor-pointer">1h</button>
+                  <button data-range="24h" onclick="setTelemetryRange('24h')" class="range-btn px-2.5 py-1 rounded-lg font-mono-code text-xs font-semibold text-slate-400 hover:text-white cursor-pointer">24h</button>
+                </div>
+              </div>
+              <div class="relative rounded-xl bg-obsidian/90 border border-slateBorder/80 p-3">
+                <svg id="cpuChartSvg" viewBox="0 0 600 180" class="w-full h-44 overflow-visible">
+                  <defs>
+                    <linearGradient id="cpuAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.45" />
+                      <stop offset="100%" stop-color="#6366f1" stop-opacity="0.02" />
+                    </linearGradient>
+                  </defs>
+                  <line x1="0" y1="45" x2="600" y2="45" stroke="#1e293b" stroke-dasharray="4 4" />
+                  <line x1="0" y1="90" x2="600" y2="90" stroke="#1e293b" stroke-dasharray="4 4" />
+                  <line x1="0" y1="135" x2="600" y2="135" stroke="#1e293b" stroke-dasharray="4 4" />
+                  <path id="cpuAreaPath" fill="url(#cpuAreaGrad)" d="" />
+                  <path id="cpuLinePath" fill="none" stroke="#818cf8" stroke-width="2.5" stroke-linecap="round" d="" />
+                </svg>
+                <div class="flex items-center justify-between text-[11px] font-mono-code text-slate-500 mt-1 px-1">
+                  <span>-100%</span>
+                  <span id="cpuChartLabel">النطاق: 15m</span>
+                  <span>الآن</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-slateCard border border-slateBorder space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+                    <span>منحنى استهلاك الذاكرة (Memory Allocation)</span>
+                  </h2>
+                  <p class="text-xs text-slate-400">توزيع الذاكرة الحية للعمليات والسكربتات</p>
+                </div>
+                <span class="px-2.5 py-1 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/25 text-xs font-mono-code" id="memPeakBadge">Peak: 0 GB</span>
+              </div>
+              <div class="relative rounded-xl bg-obsidian/90 border border-slateBorder/80 p-3">
+                <svg id="memChartSvg" viewBox="0 0 600 180" class="w-full h-44 overflow-visible">
+                  <defs>
+                    <linearGradient id="memAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.42" />
+                      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.02" />
+                    </linearGradient>
+                  </defs>
+                  <line x1="0" y1="45" x2="600" y2="45" stroke="#1e293b" stroke-dasharray="4 4" />
+                  <line x1="0" y1="90" x2="600" y2="90" stroke="#1e293b" stroke-dasharray="4 4" />
+                  <line x1="0" y1="135" x2="600" y2="135" stroke="#1e293b" stroke-dasharray="4 4" />
+                  <path id="memAreaPath" fill="url(#memAreaGrad)" d="" />
+                  <path id="memLinePath" fill="none" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round" d="" />
+                </svg>
+                <div class="flex items-center justify-between text-[11px] font-mono-code text-slate-500 mt-1 px-1">
+                  <span>0 GB</span>
+                  <span id="memChartLabel">النطاق: 15m</span>
+                  <span id="memMaxAxis">Max</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-slateCard border border-slateBorder overflow-hidden">
+            <div class="px-5 py-4 border-b border-slateBorder flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 class="text-base font-bold text-white">الملفات والسكربتات المستضافة في ابن اليمن</h2>
+                <p class="text-xs text-slate-400">تشغيل وإيقاف وعرض السجلات وحذف الملفات مباشرة من السيرفر</p>
+              </div>
+              <button onclick="navigateTo('workloads')" class="text-xs font-bold text-cyan-400 hover:text-cyan-300 inline-flex items-center gap-1 cursor-pointer">
+                <span>إدارة كافة السكربتات</span>
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-right border-collapse">
+                <thead>
+                  <tr class="bg-slateElevated/60 text-slate-400 text-xs font-bold border-b border-slateBorder">
+                    <th class="py-3 px-4">الاسم / الاسم الإنجليزي</th>
+                    <th class="py-3 px-4">النوع</th>
+                    <th class="py-3 px-4">الحالة</th>
+                    <th class="py-3 px-4">تاريخ الرفع</th>
+                    <th class="py-3 px-4 text-center">إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="overviewWorkloadsBody" class="divide-y divide-slateBorder/60 text-sm"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-workloads" class="app-view hidden space-y-6">
+          <div class="p-5 rounded-2xl bg-slateCard border border-slateBorder flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-bold text-white">مدير السكربتات والعمليات — ابن اليمن</h2>
+              <p class="text-xs text-slate-400">بحث وتصفية وتشغيل وإيقاف ومشاهدة السجلات الحية لملفاتك</p>
+            </div>
+            <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5">
+              <input id="workloadSearch" type="text" oninput="renderWorkloadsManager()" placeholder="بحث باسم الملف..." class="px-3.5 py-2 rounded-xl bg-obsidian border border-slateBorder text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500" />
+              <select id="workloadStatusFilter" onchange="renderWorkloadsManager()" class="px-3 py-2 rounded-xl bg-obsidian border border-slateBorder text-xs sm:text-sm text-slate-200 cursor-pointer">
+                <option value="all">جميع الحالات</option>
+                <option value="running">يعمل الآن</option>
+                <option value="pending">قيد المراجعة</option>
+                <option value="stopped">متوقف</option>
+              </select>
+            </div>
+          </div>
+          <div id="workloadsCardsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+        </section>
+
+        <section id="view-console" class="app-view hidden space-y-4">
+          <div class="rounded-2xl bg-slateCard border border-slateBorder overflow-hidden">
+            <div class="p-4 sm:p-5 border-b border-slateBorder flex flex-wrap items-center justify-between gap-3">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono-code text-xs font-bold">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 dot-pulse"></span> LIVE LOGS
+                </span>
+                <select id="consoleScriptSelect" onchange="loadScriptLogs(this.value)" class="px-3 py-1.5 rounded-xl bg-obsidian border border-slateBorder font-mono-code text-xs text-cyan-300">
+                  <option value="">-- اختر سكربت لعرض سجله الحقيقي --</option>
+                </select>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="loadScriptLogs(document.getElementById('consoleScriptSelect').value)" class="px-3 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-bold cursor-pointer">تحديث السجل</button>
+                <button onclick="copyConsoleLogs()" class="px-3 py-1.5 rounded-xl bg-slateElevated text-xs font-bold text-slate-200 cursor-pointer">نسخ</button>
+              </div>
+            </div>
+            <div id="consoleOutputBox" dir="ltr" class="p-4 sm:p-5 bg-[#04060b] font-mono-code text-xs sm:text-[13px] space-y-1.5 h-[390px] overflow-y-auto text-left"></div>
+            <form onsubmit="handleTerminalCommand(event)" dir="ltr" class="p-3.5 bg-midnight border-t border-slateBorder flex items-center gap-2.5">
+              <span class="font-mono-code text-xs sm:text-sm font-bold text-cyan-400 shrink-0">yemen@host:~#</span>
+              <input id="terminalCmdInput" type="text" autocomplete="off" placeholder="Type command: help, status, ps, clear" class="flex-1 bg-transparent font-mono-code text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none" />
+              <button type="submit" class="px-3.5 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/35 font-mono-code text-xs font-bold cursor-pointer">RUN</button>
+            </form>
+          </div>
+        </section>
+
+        <section id="view-files" class="app-view hidden space-y-5">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            <div class="lg:col-span-4 rounded-2xl bg-slateCard border border-slateBorder p-4 space-y-4">
+              <div class="flex items-center justify-between pb-3 border-b border-slateBorder">
+                <h2 class="text-sm font-bold text-white">ملفاتك المرفوعة على السيرفر</h2>
+                <button onclick="openPhoneUploadModal()" class="px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-200 border border-indigo-500/30 text-xs font-bold cursor-pointer">+ رفع ملف</button>
+              </div>
+              <div id="fileTreeList" dir="ltr" class="space-y-1.5 font-mono-code text-xs text-left"></div>
+            </div>
+
+            <div class="lg:col-span-8 rounded-2xl bg-slateCard border border-slateBorder overflow-hidden flex flex-col">
+              <div class="px-4 py-3 bg-slateElevated/70 border-b border-slateBorder flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span id="editorActiveFileName" dir="ltr" class="font-mono-code text-xs sm:text-sm font-bold text-white">اختر ملفاً</span>
+                  <span id="editorLangBadge" class="font-mono-code text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">CODE</span>
+                </div>
+                <button onclick="saveActiveFileToServer()" class="btn-electric px-3.5 py-1.5 rounded-lg text-xs font-bold text-white cursor-pointer">حفظ وتشفير على السيرفر</button>
+              </div>
+              <textarea id="codeEditorTextarea" dir="ltr" spellcheck="false" class="w-full h-80 p-4 bg-[#050811] text-slate-100 font-mono-code text-xs sm:text-[13px] leading-relaxed focus:outline-none"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-databases" class="app-view hidden space-y-6">
+          <div class="rounded-2xl bg-slateCard border border-slateBorder p-5 space-y-3">
+            <h2 class="text-lg font-bold text-white">قواعد البيانات والتخزين المشفر في ابن اليمن</h2>
+            <p class="text-xs text-slate-400">البيانات مخزنة محلياً ومشفّرة بـ AES-CBC مع SQLite WAL وملفات JSON الموحدة، ويدعم الفحص التلقائي للأكواد.</p>
+            <div id="dbSummaryCards" class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 font-mono-code text-xs"></div>
+          </div>
+        </section>
+
+        <section id="view-network" class="app-view hidden space-y-6">
+          <div class="rounded-2xl bg-slateCard border border-slateBorder p-5 space-y-4">
+            <h2 class="text-lg font-bold text-white">مسارات وخدمات ابن اليمن</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono-code text-xs">
+              <div class="p-3.5 rounded-xl bg-obsidian border border-slateBorder">
+                <p class="text-cyan-300 font-bold">GET /</p>
+                <p class="text-slate-400 mt-1">لوحة تحكم منصة ابن اليمن الرئيسية (index.html)</p>
+              </div>
+              <div class="p-3.5 rounded-xl bg-obsidian border border-slateBorder">
+                <p class="text-cyan-300 font-bold">GET /login</p>
+                <p class="text-slate-400 mt-1">صفحة تسجيل الدخول وإنشاء حساب جديد</p>
+              </div>
+              <div class="p-3.5 rounded-xl bg-obsidian border border-slateBorder">
+                <p class="text-cyan-300 font-bold">POST /api/upload</p>
+                <p class="text-slate-400 mt-1">رفع ملفات (.py / .js / .zip) مباشرة من الهاتف أو المتصفح</p>
+              </div>
+              <div class="p-3.5 rounded-xl bg-obsidian border border-slateBorder">
+                <p class="text-cyan-300 font-bold">GET /api/overview</p>
+                <p class="text-slate-400 mt-1">جلب حالة النظام والملفات والرصيد والمستخدم الحالي</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="view-billing" class="app-view hidden space-y-6">
+          <div class="rounded-2xl bg-slateCard border border-slateBorder p-5 space-y-4">
+            <h2 class="text-lg font-bold text-white">بيانات الحساب والرصيد — ابن اليمن</h2>
+            <div id="accountBillingBox" class="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono-code text-xs"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="phoneUploadModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+    <div class="w-full max-w-md rounded-2xl bg-slateCard border border-slateBorder shadow-2xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-slateBorder flex items-center justify-between">
+        <h3 class="text-base font-bold text-white">رفع ملف من ذاكرة الهاتف — ابن اليمن</h3>
+        <button onclick="closePhoneUploadModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <form onsubmit="submitPhoneFileUpload(event)" class="p-5 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">الملف (.py, .js, .zip)</label>
+          <input id="modalPhoneFileInput" type="file" accept=".py,.js,.zip" required class="w-full px-3 py-2 rounded-xl bg-obsidian border border-slateBorder text-xs text-slate-200 cursor-pointer" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">عدد الساعات</label>
+          <input id="modalPhoneHoursInput" type="number" min="1" max="720" value="1" required class="w-full px-3 py-2 rounded-xl bg-obsidian border border-slateBorder font-mono-code text-sm text-white" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closePhoneUploadModal()" class="px-4 py-2 rounded-xl bg-slateElevated text-xs font-bold text-slate-300 cursor-pointer">إلغاء</button>
+          <button type="submit" class="btn-electric px-4 py-2 rounded-xl text-xs font-bold text-white cursor-pointer">رفع الآن</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      currentTab: "overview",
+      telemetryRange: "15m",
+      cpuSeries: [22, 26, 30, 28, 34, 31, 29, 35, 32, 30],
+      memSeries: [1.1, 1.2, 1.3, 1.25, 1.4, 1.35, 1.3, 1.42, 1.38, 1.36],
+      ramTotalGb: 8,
+      user: null,
+      system: null,
+      files: [],
+      activeFileId: null,
+      logsText: ""
+    };
+
+    const viewMeta = {
+      overview: { title: "نظرة عامة والتحكم — ابن اليمن", subtitle: "مراقبة الأداء اللحظي، رفع الملفات من الهاتف، وإدارة السكربتات الفورية" },
+      workloads: { title: "أحمال العمل والسكربتات — ابن اليمن", subtitle: "تشغيل وإيقاف ومراقبة كافة السكربتات والعمليات" },
+      console: { title: "الطرفية والسجلات الحية — ابن اليمن", subtitle: "استعراض السجلات الحقيقية للملفات والأوامر المباشرة" },
+      files: { title: "مدير الملفات والمحرر — ابن اليمن", subtitle: "قراءة وتعديل وحفظ الملفات المشفّرة على السيرفر" },
+      databases: { title: "قواعد البيانات والتخزين — ابن اليمن", subtitle: "حالة قواعد البيانات والملفات والتشفير" },
+      network: { title: "الشبكة والخدمات — ابن اليمن", subtitle: "مسارات API وصفحات ابن اليمن" },
+      billing: { title: "الحساب والرصيد — ابن اليمن", subtitle: "رصيد النقاط والرصيد المالي وبيانات المستخدم" }
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      refreshAllFromBackend(false);
+      setInterval(() => refreshAllFromBackend(false), 6000);
+    });
+
+    function navigateTo(tabName) {
+      if (!viewMeta[tabName]) return;
+      state.currentTab = tabName;
+      document.querySelectorAll(".app-view").forEach(s => s.classList.add("hidden"));
+      document.getElementById(`view-${tabName}`)?.classList.remove("hidden");
+      document.getElementById("activeViewTitle").textContent = viewMeta[tabName].title;
+      document.getElementById("activeViewSubtitle").textContent = viewMeta[tabName].subtitle;
+      document.querySelectorAll(".nav-link").forEach(btn => {
+        const active = btn.getAttribute("data-tab") === tabName;
+        btn.className = active
+          ? "nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-bold bg-indigo-500/15 text-white border border-indigo-500/35 transition-all cursor-pointer"
+          : "nav-link w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slateElevated/80 border border-transparent transition-all cursor-pointer";
+      });
+      setMobileDrawer(false);
+      lucide.createIcons();
+    }
+
+    function setMobileDrawer(open) {
+      const sb = document.getElementById("appSidebar");
+      const bd = document.getElementById("mobileBackdrop");
+      if (open) { sb.classList.remove("translate-x-full"); bd.classList.remove("hidden"); }
+      else { sb.classList.add("translate-x-full"); bd.classList.add("hidden"); }
+    }
+
+    async function refreshAllFromBackend(notify = false) {
+      const icon = document.getElementById("topRefreshIcon");
+      if (notify && icon) icon.classList.add("animate-spin");
+      try {
+        const res = await fetch("/api/overview");
+        if (res.status === 401) {
+          window.location.href = "/login";
+          return;
+        }
+        const data = await res.json();
+        if (!data.ok) return;
+
+        state.user = data.user;
+        state.system = data.system;
+        state.files = data.files || [];
+
+        const uName = data.user.display_name || data.user.username || "مستخدم ابن اليمن";
+        document.getElementById("sidebarUserName").textContent = uName;
+        document.getElementById("sidebarUserMeta").textContent = `@${data.user.username} • ID:${data.user.telegram_id}`;
+        document.getElementById("sidebarPointsBadge").textContent = `${data.user.points} pt | ${data.user.balance} ₽`;
+        document.getElementById("uploadPriceHint").textContent = `السعر: ${data.upload_price} نقطة / ساعة`;
+
+        const sys = data.system || {};
+        const cpu = Number(sys.cpu_percent || 0);
+        const ramUsed = Number(sys.ram_used_gb || 0);
+        const ramTotal = Math.max(1, Number(sys.ram_total_gb || 4));
+        const diskPct = Number(sys.disk_percent || 0);
+
+        state.ramTotalGb = ramTotal;
+        state.cpuSeries.push(cpu);
+        if (state.cpuSeries.length > 14) state.cpuSeries.shift();
+        state.memSeries.push(ramUsed);
+        if (state.memSeries.length > 14) state.memSeries.shift();
+
+        document.getElementById("kpiCpu").textContent = `${cpu.toFixed(1)}%`;
+        document.getElementById("kpiCpuBar").style.width = `${Math.min(100, cpu)}%`;
+        document.getElementById("kpiCores").textContent = `${sys.cpu_count || 1} vCPU`;
+
+        document.getElementById("kpiRam").textContent = `${ramUsed.toFixed(2)} GB`;
+        document.getElementById("kpiRamSub").textContent = `/ ${ramTotal.toFixed(1)} GB`;
+        document.getElementById("kpiRamBar").style.width = `${Math.min(100, (ramUsed / ramTotal) * 100)}%`;
+
+        document.getElementById("kpiDiskIo").textContent = `${diskPct.toFixed(1)}%`;
+        document.getElementById("kpiDiskFree").textContent = `${Number(sys.disk_free_gb || 0).toFixed(1)} GB Free`;
+        document.getElementById("kpiDiskBar").style.width = `${Math.min(100, diskPct)}%`;
+
+        const runningCount = state.files.filter(f => f.running).length;
+        document.getElementById("kpiActiveContainers").textContent = `${runningCount} / ${state.files.length}`;
+        document.getElementById("navWorkloadsBadge").textContent = String(state.files.length);
+        document.getElementById("kpiServerMode").textContent = sys.bot_locked ? "MAINTENANCE" : "ONLINE";
+        document.getElementById("memMaxAxis").textContent = `${ramTotal.toFixed(1)} GB`;
+        document.getElementById("memPeakBadge").textContent = `Peak: ${Math.max(...state.memSeries).toFixed(2)} GB`;
+
+        renderCharts();
+        renderOverviewFiles();
+        renderWorkloadsManager();
+        renderFileTree();
+        populateConsoleSelect();
+        renderDbAndBilling();
+
+        if (notify) showToast("تم تحديث بيانات ابن اليمن بنجاح", "success");
+      } catch (err) {
+        if (notify) showToast("تعذر الاتصال بالخادم", "warning");
+      } finally {
+        if (icon) setTimeout(() => icon.classList.remove("animate-spin"), 350);
+      }
+    }
+
+    function setTelemetryRange(range) {
+      state.telemetryRange = range;
+      document.getElementById("cpuChartLabel").textContent = `النطاق: ${range}`;
+      document.getElementById("memChartLabel").textContent = `النطاق: ${range}`;
+      document.querySelectorAll(".range-btn").forEach(b => {
+        const active = b.getAttribute("data-range") === range;
+        b.className = active
+          ? "range-btn px-2.5 py-1 rounded-lg font-mono-code text-xs font-bold bg-indigo-500/25 text-indigo-200 cursor-pointer"
+          : "range-btn px-2.5 py-1 rounded-lg font-mono-code text-xs font-semibold text-slate-400 hover:text-white cursor-pointer";
+      });
+      renderCharts();
+    }
+
+    function renderCharts() {
+      buildAreaSvg(state.cpuSeries, 0, 100, "cpuLinePath", "cpuAreaPath");
+      buildAreaSvg(state.memSeries, 0, state.ramTotalGb, "memLinePath", "memAreaPath");
+    }
+
+    function buildAreaSvg(values, minVal, maxVal, lineId, areaId) {
+      const width = 600, height = 170;
+      const stepX = width / Math.max(1, values.length - 1);
+      const coords = values.map((val, idx) => {
+        const x = Number((idx * stepX).toFixed(1));
+        const clamped = Math.min(maxVal, Math.max(minVal, val));
+        const ratio = (clamped - minVal) / (maxVal - minVal || 1);
+        const y = Number((height - ratio * (height - 20) - 10).toFixed(1));
+        return { x, y };
+      });
+      if (!coords.length) return;
+      const lineD = coords.map((pt, i) => `${i === 0 ? "M" : "L"} ${pt.x} ${pt.y}`).join(" ");
+      const areaD = `${lineD} L ${coords[coords.length - 1].x} ${height} L ${coords[0].x} ${height} Z`;
+      document.getElementById(lineId).setAttribute("d", lineD);
+      document.getElementById(areaId).setAttribute("d", areaD);
+    }
+
+    function fileStatusBadge(f) {
+      if (f.status === "pending") {
+        return '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">قيد المراجعة</span>';
+      }
+      if (f.running) {
+        return '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">يعمل الآن</span>';
+      }
+      return '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30">متوقف</span>';
+    }
+
+    function renderOverviewFiles() {
+      const tbody = document.getElementById("overviewWorkloadsBody");
+      if (!tbody) return;
+      if (!state.files.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400 text-xs">لا توجد ملفات مرفوعة بعد. ارفع ملف (.py / .js / .zip) من ذاكرة الهاتف للبدء.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = state.files.map(f => `
+        <tr class="hover:bg-slateElevated/35">
+          <td class="py-3 px-4">
+            <div class="font-bold text-white">${escapeHtml(f.file_name)}</div>
+            <div class="font-mono-code text-xs text-cyan-300">${escapeHtml(f.stored_name || "")}</div>
+          </td>
+          <td class="py-3 px-4 font-mono-code text-xs text-slate-300">${escapeHtml(f.ext || ".py")}</td>
+          <td class="py-3 px-4">${fileStatusBadge(f)}</td>
+          <td class="py-3 px-4 font-mono-code text-xs text-slate-400">${escapeHtml(f.created_at || "")}</td>
+          <td class="py-3 px-4">
+            <div class="flex items-center justify-center gap-1.5">
+              <button onclick="controlScript('${escapeAttr(f.id)}', '${f.running ? "stop" : "start"}')" class="px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer ${f.running ? "bg-amber-500/15 text-amber-300" : "bg-emerald-500/15 text-emerald-300"}">
+                ${f.running ? "إيقاف" : "تشغيل"}
+              </button>
+              <button onclick="openFileInEditor('${escapeAttr(f.id)}')" class="px-2.5 py-1 rounded-lg bg-indigo-500/15 text-indigo-200 text-xs font-bold cursor-pointer">تحرير</button>
+              <button onclick="controlScript('${escapeAttr(f.id)}', 'delete')" class="px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-300 text-xs font-bold cursor-pointer">حذف</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function renderWorkloadsManager() {
+      const grid = document.getElementById("workloadsCardsGrid");
+      if (!grid) return;
+      const q = (document.getElementById("workloadSearch")?.value || "").trim().toLowerCase();
+      const st = document.getElementById("workloadStatusFilter")?.value || "all";
+      const list = state.files.filter(f => {
+        const matchQ = !q || (f.file_name || "").toLowerCase().includes(q) || (f.stored_name || "").toLowerCase().includes(q);
+        const matchSt = st === "all" || (st === "running" && f.running) || (st === "pending" && f.status === "pending") || (st === "stopped" && !f.running && f.status !== "pending");
+        return matchQ && matchSt;
+      });
+      if (!list.length) {
+        grid.innerHTML = '<div class="col-span-full p-8 text-center rounded-2xl bg-slateCard border border-slateBorder text-slate-400 text-xs">لا توجد سكربتات مطابقة.</div>';
+        return;
+      }
+      grid.innerHTML = list.map(f => `
+        <div class="p-5 rounded-2xl bg-slateCard border border-slateBorder space-y-4">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <h3 class="font-bold text-white text-sm">${escapeHtml(f.file_name)}</h3>
+              <p class="font-mono-code text-xs text-cyan-300 mt-0.5">${escapeHtml(f.stored_name || "")}</p>
+            </div>
+            ${fileStatusBadge(f)}
+          </div>
+          <div class="text-xs font-mono-code text-slate-400 space-y-1">
+            <div>ID: ${escapeHtml(f.id)} • Type: ${escapeHtml(f.ext || ".py")}</div>
+            <div>Hours: ${escapeHtml(String(f.hours || 1))}h</div>
+          </div>
+          <div class="pt-3 border-t border-slateBorder flex flex-wrap gap-2">
+            <button onclick="controlScript('${escapeAttr(f.id)}', '${f.running ? "stop" : "start"}')" class="px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer ${f.running ? "bg-amber-500/15 text-amber-300" : "bg-emerald-500/15 text-emerald-300"}">${f.running ? "إيقاف" : "تشغيل"}</button>
+            <button onclick="openFileInEditor('${escapeAttr(f.id)}')" class="px-3 py-1.5 rounded-lg bg-indigo-500/15 text-indigo-200 text-xs font-bold cursor-pointer">المحرر</button>
+            <button onclick="viewScriptLogFromCard('${escapeAttr(f.id)}')" class="px-3 py-1.5 rounded-lg bg-cyan-500/15 text-cyan-300 text-xs font-bold cursor-pointer">السجل</button>
+            <button onclick="controlScript('${escapeAttr(f.id)}', 'delete')" class="px-3 py-1.5 rounded-lg bg-rose-500/15 text-rose-300 text-xs font-bold cursor-pointer">حذف</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    async function controlScript(fid, action) {
+      const res = await fetch("/api/script/control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ file_id: fid, action })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast(data.message || "تم تنفيذ العملية بنجاح", "success");
+        if (action === "delete" && state.activeFileId === fid) {
+          state.activeFileId = null;
+          document.getElementById("codeEditorTextarea").value = "";
+          document.getElementById("editorActiveFileName").textContent = "اختر ملفاً";
+        }
+        await refreshAllFromBackend(false);
+      } else {
+        showToast(data.error || "تعذر تنفيذ العملية", "warning");
+      }
+    }
+
+    function renderFileTree() {
+      const tree = document.getElementById("fileTreeList");
+      if (!tree) return;
+      if (!state.files.length) {
+        tree.innerHTML = '<div class="text-slate-500">لا توجد ملفات بعد.</div>';
+        return;
+      }
+      tree.innerHTML = state.files.map(f => {
+        const active = f.id === state.activeFileId;
+        return `
+          <button onclick="openFileInEditor('${escapeAttr(f.id)}')" class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left cursor-pointer ${active ? "bg-indigo-500/20 text-cyan-200 border border-indigo-500/40 font-bold" : "text-slate-300 hover:bg-slateElevated/70"}">
+            <span class="truncate">${escapeHtml(f.stored_name || f.file_name)}</span>
+            <span class="text-[10px] text-slate-400">${escapeHtml(f.ext || "")}</span>
+          </button>
+        `;
+      }).join("");
+    }
+
+    async function openFileInEditor(fid) {
+      navigateTo("files");
+      const res = await fetch(`/api/file/content?file_id=${encodeURIComponent(fid)}`);
+      const data = await res.json();
+      if (data.ok) {
+        state.activeFileId = fid;
+        document.getElementById("editorActiveFileName").textContent = data.stored_name || data.file_name;
+        document.getElementById("editorLangBadge").textContent = (data.ext || ".py").replace(".", "").toUpperCase();
+        document.getElementById("codeEditorTextarea").value = data.content || "";
+        renderFileTree();
+      } else {
+        showToast(data.error || "تعذر فتح الملف", "warning");
+      }
+    }
+
+    async function saveActiveFileToServer() {
+      if (!state.activeFileId) {
+        showToast("اختر ملفاً أولاً من القائمة", "warning");
+        return;
+      }
+      const content = document.getElementById("codeEditorTextarea").value;
+      const res = await fetch("/api/file/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ file_id: state.activeFileId, content })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast("تم حفظ وتشفير الملف على السيرفر بنجاح", "success");
+      } else {
+        showToast(data.error || "تعذر حفظ الملف", "warning");
+      }
+    }
+
+    function populateConsoleSelect() {
+      const sel = document.getElementById("consoleScriptSelect");
+      if (!sel) return;
+      const current = sel.value;
+      sel.innerHTML = '<option value="">-- اختر سكربت لعرض سجله الحقيقي --</option>' +
+        state.files.map(f => `<option value="${escapeAttr(f.id)}">${escapeHtml(f.stored_name || f.file_name)}</option>`).join("");
+      if (current) sel.value = current;
+    }
+
+    async function viewScriptLogFromCard(fid) {
+      navigateTo("console");
+      document.getElementById("consoleScriptSelect").value = fid;
+      await loadScriptLogs(fid);
+    }
+
+    async function loadScriptLogs(fid) {
+      const box = document.getElementById("consoleOutputBox");
+      if (!box) return;
+      if (!fid) {
+        box.innerHTML = '<div class="text-slate-500">Select a script above to view live output logs.</div>';
+        return;
+      }
+      const res = await fetch(`/api/script/logs?file_id=${encodeURIComponent(fid)}`);
+      const data = await res.json();
+      if (data.ok) {
+        state.logsText = data.logs || "";
+        box.innerHTML = `<pre class="whitespace-pre-wrap text-cyan-200">${escapeHtml(state.logsText || "No logs yet.")}</pre>`;
+        box.scrollTop = box.scrollHeight;
+      } else {
+        box.innerHTML = `<div class="text-rose-400">${escapeHtml(data.error || "Error loading logs")}</div>`;
+      }
+    }
+
+    function handleTerminalCommand(e) {
+      e.preventDefault();
+      const inp = document.getElementById("terminalCmdInput");
+      const cmd = inp.value.trim();
+      if (!cmd) return;
+      inp.value = "";
+      const box = document.getElementById("consoleOutputBox");
+      if (cmd.toLowerCase() === "clear") {
+        box.innerHTML = "";
+        return;
+      }
+      let reply = "Commands: help | status | ps | clear";
+      if (cmd.toLowerCase() === "status") {
+        reply = `CPU=${document.getElementById("kpiCpu").textContent} RAM=${document.getElementById("kpiRam").textContent}`;
+      } else if (cmd.toLowerCase() === "ps") {
+        reply = state.files.map(f => `${f.stored_name || f.file_name}(${f.running ? "running" : "stopped"})`).join(", ") || "No scripts";
+      }
+      box.innerHTML += `<div class="text-emerald-400">$ ${escapeHtml(cmd)}</div><div class="text-slate-200 mb-1">${escapeHtml(reply)}</div>`;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function copyConsoleLogs() {
+      navigator.clipboard?.writeText(state.logsText || "").catch(() => {});
+      showToast("تم نسخ السجلات", "success");
+    }
+
+    function renderDbAndBilling() {
+      const dbBox = document.getElementById("dbSummaryCards");
+      if (dbBox && state.system) {
+        dbBox.innerHTML = `
+          <div class="p-4 rounded-xl bg-obsidian border border-slateBorder">
+            <p class="text-cyan-300 font-bold">AES-256-CBC Encrypted Vault</p>
+            <p class="text-slate-400 mt-1">Encrypted Files: ${escapeHtml(String(state.system.encrypted_files_count || 0))}</p>
+          </div>
+          <div class="p-4 rounded-xl bg-obsidian border border-slateBorder">
+            <p class="text-indigo-300 font-bold">Unified SQLite WAL + JSON</p>
+            <p class="text-slate-400 mt-1">Total Hosted Files: ${escapeHtml(String(state.system.total_files_count || 0))}</p>
+          </div>
+          <div class="p-4 rounded-xl bg-obsidian border border-slateBorder">
+            <p class="text-emerald-300 font-bold">Isolated User Sandboxes</p>
+            <p class="text-slate-400 mt-1">Active Processes: ${escapeHtml(String(state.system.active_processes_count || 0))}</p>
+          </div>
+        `;
+      }
+      const billBox = document.getElementById("accountBillingBox");
+      if (billBox && state.user) {
+        billBox.innerHTML = `
+          <div class="p-4 rounded-xl bg-obsidian border border-slateBorder">
+            <p class="text-slate-400">المستخدم</p>
+            <p class="text-white font-bold text-sm mt-1">${escapeHtml(state.user.display_name || state.user.username)}</p>
+          </div>
+          <div class="p-4 rounded-xl bg-obsidian border border-slateBorder">
+            <p class="text-slate-400">رصيد النقاط</p>
+            <p class="text-cyan-300 font-bold text-sm mt-1">${escapeHtml(String(state.user.points))} نقطة</p>
+          </div>
+          <div class="p-4 rounded-xl bg-obsidian border border-slateBorder">
+            <p class="text-slate-400">الرصيد المالي</p>
+            <p class="text-emerald-300 font-bold text-sm mt-1">${escapeHtml(String(state.user.balance))} ₽</p>
+          </div>
+        `;
+      }
+    }
+
+    function openPhoneUploadModal() {
+      const m = document.getElementById("phoneUploadModal");
+      m.classList.remove("hidden");
+      m.classList.add("flex");
+    }
+
+    function closePhoneUploadModal() {
+      const m = document.getElementById("phoneUploadModal");
+      m.classList.add("hidden");
+      m.classList.remove("flex");
+    }
+
+    async function submitPhoneFileUpload(e) {
+      e.preventDefault();
+      const modalFile = document.getElementById("modalPhoneFileInput")?.files?.[0];
+      const pageFile = document.getElementById("phoneFileInput")?.files?.[0];
+      const file = modalFile || pageFile;
+      const hours = document.getElementById("modalPhoneFileInput")?.files?.[0]
+        ? document.getElementById("modalPhoneHoursInput").value
+        : document.getElementById("phoneUploadHours").value;
+
+      if (!file) {
+        showToast("اختر ملفاً من ذاكرة الهاتف أولاً", "warning");
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("hours", String(hours || 1));
+
+      showToast("جاري رفع الملف وفحصه أمنياً...", "info");
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.ok) {
+        showToast(data.message || "تم رفع الملف بنجاح إلى ابن اليمن", "success");
+        if (document.getElementById("phoneFileInput")) document.getElementById("phoneFileInput").value = "";
+        if (document.getElementById("modalPhoneFileInput")) document.getElementById("modalPhoneFileInput").value = "";
+        closePhoneUploadModal();
+        await refreshAllFromBackend(false);
+      } else {
+        showToast(data.error || "تعذر رفع الملف", "warning");
+      }
+    }
+
+    async function logoutWebAccount() {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/login";
+    }
+
+    function showToast(message, type = "info") {
+      const stack = document.getElementById("toastStack");
+      if (!stack) return;
+      const palette = {
+        success: "bg-emerald-950/95 border-emerald-500/40 text-emerald-200",
+        warning: "bg-amber-950/95 border-amber-500/40 text-amber-200",
+        info: "bg-slate-900/95 border-cyan-500/40 text-cyan-200"
+      };
+      const el = document.createElement("div");
+      el.className = `px-4 py-3 rounded-xl border text-xs font-bold shadow-xl ${palette[type] || palette.info}`;
+      el.textContent = message;
+      stack.appendChild(el);
+      setTimeout(() => { el.remove(); }, 3400);
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function escapeAttr(str) {
+      return String(str ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+    }
+  </script>
+</body>
+</html>

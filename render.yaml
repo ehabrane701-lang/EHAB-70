@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: ibn-al-yemen-host
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: BOT_TOKEN
+        sync: false
+      - key: OWNER_ID
+        value: "1002670694"
+      - key: ADMIN_ID
+        value: "1002670694"
+      - key: PUBLIC_SERVER_URL
+        sync: false
+      - key: WEB_ADMIN_USERNAME
+        value: yemen_admin
+      - key: WEB_ADMIN_PASSWORD
+        sync: false
